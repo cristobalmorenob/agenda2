@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Archivos del Templo">
+<meta name="theme-color" content="#0d0a04">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Archivos del Templo Jedi - Eisenhower Matrix">
+
+<!-- Apple touch icons (ícono en pantalla de inicio) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%230d0a04' rx='40'/><rect x='85' y='20' width='10' height='80' rx='5' fill='%234ade80'/><rect x='76' y='94' width='28' height='8' rx='4' fill='%235a6370'/><circle cx='90' cy='130' r='28' fill='none' stroke='%23c8971e' stroke-width='8'/><circle cx='90' cy='130' r='16' fill='none' stroke='%23c8971e' stroke-width='5'/><circle cx='90' cy='130' r='5' fill='%23c8971e'/></svg>">
+
+<!-- Manifest inline via JS -->
+<script>
+(function(){
+  const m = {
+    name: "Archivos del Templo",
+    short_name: "Templo Jedi",
+    description: "Matriz Eisenhower Star Wars",
+    start_url: "./",
+    display: "standalone",
+    background_color: "#0d0a04",
+    theme_color: "#0d0a04",
+    orientation: "portrait",
+    icons: [{
+      src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%230d0a04'/><rect x='246' y='60' width='20' height='200' rx='10' fill='%234ade80'/><rect x='220' y='250' width='72' height='18' rx='9' fill='%235a6370'/><circle cx='256' cy='370' r='80' fill='none' stroke='%23c8971e' stroke-width='22'/><circle cx='256' cy='370' r='46' fill='none' stroke='%23c8971e' stroke-width='14'/><circle cx='256' cy='370' r='14' fill='%23c8971e'/></svg>",
+      sizes: "512x512", type: "image/svg+xml", purpose: "any maskable"
+    }]
+  };
+  const blob = new Blob([JSON.stringify(m)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const l = document.createElement('link');
+  l.rel = 'manifest'; l.href = url;
+  document.head.appendChild(l);
+})();
+</script>
+
+<!-- Service Worker para offline -->
+<script>
+if('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    const sw = `
+const CACHE = 'jto-v1';
+const FONTS = [
+  'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Teko:wght@300;400;500;600&family=Share+Tech+Mono&display=swap'
+];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FONTS).catch(()=>{})));
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => new Response('', {status:408}))));
+});`;
+    const blob = new Blob([sw], {type:'application/javascript'});
+    const url = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url).catch(()=>{});
+  });
+}
+</script>
+
+<title>Archivos del Templo</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Teko:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0a04;--bg2:#110e06;--bg3:#171209;
+  --sur:#1c1608;--sur2:#221a0a;
+  --gold:#c8971e;--gold2:#e8b84b;--gold3:#f5d07a;
+  --gdim:rgba(200,151,30,.12);--gglow:rgba(200,151,30,.26);
+  --red:#cc2200;--red2:#ff4422;--rdim:rgba(204,34,0,.14);
+  --blue:#2299dd;--blue2:#55bbff;--bdim:rgba(34,153,221,.13);
+  --ora:#cc7700;--ora2:#ffaa33;--odim:rgba(204,119,0,.13);
+  --mut:#4a3d1a;--bdr:rgba(200,151,30,.18);--bdr2:rgba(200,151,30,.32);
+  --txt:#e8dfc0;--txt2:#9a8a5c;--txt3:#5a4e2e;
+  --fd:'Cinzel',serif;--fb:'Teko',sans-serif;--fm:'Share Tech Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:var(--fb);color:var(--txt);display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative}
+
+/* stars */
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.s{position:absolute;border-radius:50%;background:#fff;animation:tw linear infinite}
+@keyframes tw{0%,100%{opacity:.05}50%{opacity:.75}}
+
+/* character bg — 4 cells matching quadrants */
+.char-bg{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+  overflow:hidden;
+}
+.cc{display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.cc svg{opacity:.05;fill:var(--gold)}
+
+/* header */
+.hd{
+  flex-shrink:0;padding:11px 14px 8px;
+  padding-top:max(11px, env(safe-area-inset-top, 11px));
+  position:relative;z-index:10;
+  border-bottom:1px solid var(--bdr);
+  background:linear-gradient(180deg,var(--bg) 55%,transparent);
+}
+.hd-in{display:flex;align-items:center;gap:10px}
+.hd-txt{flex:1;min-width:0}
+.hd-title{font-family:var(--fd);font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--gold2);line-height:1.1}
+.hd-sub{font-family:var(--fm);font-size:7.5px;color:var(--txt3);letter-spacing:.12em;text-transform:uppercase;margin-top:1px}
+.fbar{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.flbl{font-family:var(--fm);font-size:7.5px;color:var(--txt3);letter-spacing:.08em}
+.fps{display:flex;gap:3px}
+.fp{width:7px;height:7px;border-radius:50%;border:1px solid var(--mut);background:var(--sur2);transition:all .4s}
+.fp.on{background:var(--gold2);border-color:var(--gold2);box-shadow:0 0 5px var(--gglow)}
+
+/* scroll */
+.scr{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;z-index:5;padding:8px 9px 120px;padding-bottom:max(120px, calc(100px + env(safe-area-inset-bottom, 0px)));-webkit-overflow-scrolling:touch}
+.scr::-webkit-scrollbar{display:none}
+
+/* axis */
+.axrow{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:5px;padding:0 1px}
+.ax{font-family:var(--fm);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);text-align:center;padding:3px 0;border-bottom:1px solid var(--bdr)}
+
+/* matrix */
+.mx{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
+
+/* quadrant */
+.q{
+  border-radius:10px;border:1px solid var(--bdr);
+  background:var(--sur);display:flex;flex-direction:column;
+  min-height:230px;position:relative;overflow:hidden;
+}
+.q::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--qc);box-shadow:0 0 8px var(--qc);opacity:.8}
+.q::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 0%,var(--qa) 0%,transparent 65%);pointer-events:none}
+.q1{--qc:var(--red2);--qa:var(--rdim)}
+.q2{--qc:var(--blue2);--qa:var(--bdim)}
+.q3{--qc:var(--red2);--qa:var(--rdim)}
+.q4{--qc:var(--mut);--qa:rgba(74,61,26,.18)}
+
+/* quad header */
+.qh{padding:8px 8px 4px;position:relative;z-index:2}
+.qh-top{display:flex;align-items:flex-start;gap:5px;margin-bottom:3px}
+.qi{width:26px;height:26px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.qi svg{width:26px;height:26px}
+.qm{flex:1;min-width:0}
+.qax{font-family:var(--fm);font-size:6.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);line-height:1.3}
+.qq{font-family:var(--fd);font-size:7.5px;font-weight:400;font-style:italic;line-height:1.35;margin-top:3px;opacity:.88}
+
+/* tasks */
+.qt{padding:0 6px 4px;flex:1;display:flex;flex-direction:column;gap:3px;position:relative;z-index:2}
+.qe{font-family:var(--fm);font-size:7.5px;color:var(--txt3);text-align:center;padding:10px 4px;letter-spacing:.06em}
+
+.tc{
+  display:flex;align-items:center;gap:4px;
+  background:rgba(0,0,0,.32);
+  border:1px solid rgba(200,151,30,.09);
+  border-left:2px solid var(--pc,var(--gold));
+  border-radius:5px;padding:4px 5px;
+  cursor:pointer;transition:all .18s;
+  animation:ta .25s ease;
+}
+@keyframes ta{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.tc:active{transform:scale(.97);opacity:.7}
+.tc.done{animation:td .44s ease forwards}
+@keyframes td{0%{opacity:1;transform:translateX(0);max-height:50px}60%{opacity:.2;transform:translateX(16px)}100%{opacity:0;transform:translateX(28px);max-height:0;padding:0;margin:0;border:none}}
+
+.trk{width:14px;height:14px;border-radius:50%;background:var(--pc,var(--gold));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:6.5px;font-weight:700;color:#000;opacity:.9}
+.tb{flex:1;min-width:0}
+.tn{font-family:var(--fb);font-size:12px;font-weight:500;color:var(--txt);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td2{font-family:var(--fm);font-size:7.5px;color:var(--txt3);margin-top:1px}
+.td2.ov{color:var(--red2)}
+
+.db{width:14px;height:14px;border-radius:50%;border:1px solid var(--bdr);background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .18s;color:transparent}
+.db:hover{border-color:var(--gold2);background:var(--gold2);color:#000}
+.db svg{width:8px;height:8px}
+
+.qadd{display:flex;align-items:center;justify-content:center;gap:3px;font-family:var(--fm);font-size:7.5px;letter-spacing:.1em;color:var(--gold);opacity:.48;padding:4px 8px 7px;background:none;border:none;width:100%;cursor:pointer;transition:opacity .2s;text-transform:uppercase;position:relative;z-index:2}
+.qadd:active{opacity:1}
+
+/* nav */
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:20;background:rgba(13,10,4,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--bdr);display:flex;padding:0 8px;padding-bottom:env(safe-area-inset-bottom,0)}
+.nb{flex:1;padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--txt3);font-family:var(--fb);transition:all .2s}
+.nb.act{color:var(--gold2)}
+.nb svg{width:17px;height:17px}
+.nb span{font-size:7.5px;letter-spacing:.1em;text-transform:uppercase}
+
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:100;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(5px)}
+.ov.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--bdr2);border-bottom:none;border-radius:18px 18px 0 0;width:100%;max-width:480px;padding:16px 16px 34px;padding-bottom:max(34px, calc(20px + env(safe-area-inset-bottom, 0px)));animation:mu .33s cubic-bezier(.34,1.2,.64,1)}
+@keyframes mu{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.mh{width:32px;height:3px;border-radius:2px;background:var(--bdr2);margin:0 auto 16px}
+.mt{font-family:var(--fd);font-size:13px;font-weight:600;letter-spacing:.08em;color:var(--gold2);margin-bottom:14px}
+.fld{margin-bottom:11px}
+.flb{font-family:var(--fm);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);margin-bottom:4px;display:block}
+input[type=text],input[type=date],textarea{width:100%;background:var(--sur2);border:1px solid var(--bdr);border-radius:7px;padding:8px 10px;color:var(--txt);font-family:var(--fb);font-size:14px;outline:none;transition:border-color .2s;-webkit-appearance:none}
+input[type=text]:focus,input[type=date]:focus,textarea:focus{border-color:var(--gold2);box-shadow:0 0 0 2px var(--gdim)}
+input[type=date]{color-scheme:dark}
+textarea{resize:none;min-height:48px}
+
+.qpick{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.qpb{border-radius:8px;border:1px solid var(--bdr);background:var(--sur);padding:7px 5px;cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--fb)}
+.qpb svg{width:22px;height:22px}
+.qpb-n{font-family:var(--fd);font-size:7.5px;font-weight:600;letter-spacing:.04em;color:var(--txt);text-align:center;line-height:1.3}
+.qpb-d{font-size:7.5px;color:var(--txt3);text-align:center;line-height:1.3;font-family:var(--fm)}
+.qpb.sq1{border-color:var(--red2);background:var(--rdim);box-shadow:0 0 10px var(--rdim)}
+.qpb.sq2{border-color:var(--blue2);background:var(--bdim);box-shadow:0 0 10px var(--bdim)}
+.qpb.sq3{border-color:var(--ora2);background:var(--odim);box-shadow:0 0 8px var(--odim)}
+.qpb.sq4{border-color:var(--mut);background:rgba(74,61,26,.18)}
+
+.prow{display:flex;gap:5px}
+.pb{flex:1;padding:7px;border-radius:7px;border:1px solid var(--bdr);background:var(--sur);cursor:pointer;transition:all .18s;font-family:var(--fd);font-size:10px;font-weight:600;letter-spacing:.06em;color:var(--txt2);text-align:center}
+.pb span{font-family:var(--fm);font-size:7px;color:var(--txt3);display:block;margin-top:2px;letter-spacing:.08em}
+.pb.sp1{border-color:var(--gold2);background:var(--gdim);color:var(--gold2)}
+.pb.sp2{border-color:var(--txt2);background:rgba(154,138,92,.1);color:var(--txt2)}
+.pb.sp3{border-color:var(--txt3);background:rgba(90,78,46,.1);color:var(--txt3)}
+
+.sbtn{width:100%;padding:12px;margin-top:14px;background:var(--gold);border:none;border-radius:9px;font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:.1em;color:#000;cursor:pointer;transition:all .2s;box-shadow:0 0 16px var(--gglow)}
+.sbtn:active{transform:scale(.98)}
+
+.toast{position:fixed;top:64px;left:50%;transform:translateX(-50%) translateY(-8px);background:var(--sur2);border:1px solid var(--bdr2);border-radius:20px;padding:6px 14px;font-family:var(--fm);font-size:10px;color:var(--gold2);z-index:200;opacity:0;transition:all .28s;pointer-events:none;box-shadow:0 0 12px var(--gglow);letter-spacing:.05em}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<!-- Character silhouettes: Vader / Yoda / Obi-Wan / Ahsoka -->
+<div class="char-bg">
+  <!-- Vader: Q1 top-left -->
+  <div class="cc" style="align-items:flex-end;justify-content:flex-end;padding-right:6px">
+    <svg viewBox="0 0 120 230" style="height:220px;width:auto">
+      <ellipse cx="60" cy="38" rx="28" ry="33"/>
+      <rect x="42" y="32" width="36" height="14" rx="2"/>
+      <polygon points="34,54 86,54 92,78 28,78"/>
+      <rect x="36" y="78" width="48" height="62" rx="4"/>
+      <polygon points="18,78 102,78 108,185 12,185"/>
+      <rect x="40" y="140" width="17" height="58" rx="3"/>
+      <rect x="63" y="140" width="17" height="58" rx="3"/>
+    </svg>
+  </div>
+  <!-- Yoda: Q2 top-right -->
+  <div class="cc" style="align-items:flex-end;justify-content:flex-start;padding-left:8px">
+    <svg viewBox="0 0 110 170" style="height:158px;width:auto">
+      <ellipse cx="20" cy="50" rx="18" ry="10" transform="rotate(-25 20 50)"/>
+      <ellipse cx="90" cy="50" rx="18" ry="10" transform="rotate(25 90 50)"/>
+      <ellipse cx="55" cy="50" rx="30" ry="32"/>
+      <ellipse cx="43" cy="44" rx="6" ry="7"/>
+      <ellipse cx="67" cy="44" rx="6" ry="7"/>
+      <rect x="32" y="80" width="46" height="52" rx="9"/>
+      <ellipse cx="55" cy="132" rx="28" ry="15"/>
+      <rect x="78" y="65" width="5" height="82" rx="2"/>
+    </svg>
+  </div>
+  <!-- Obi-Wan: Q3 bottom-left -->
+  <div class="cc" style="align-items:flex-end;justify-content:flex-end;padding-right:4px">
+    <svg viewBox="0 0 120 210" style="height:198px;width:auto">
+      <ellipse cx="60" cy="32" rx="23" ry="27"/>
+      <ellipse cx="60" cy="52" rx="13" ry="9"/>
+      <rect x="30" y="57" width="60" height="78" rx="6"/>
+      <polygon points="14,57 106,57 112,178 8,178"/>
+      <rect x="38" y="135" width="18" height="58" rx="4"/>
+      <rect x="64" y="135" width="18" height="58" rx="4"/>
+      <rect x="85" y="114" width="5" height="24" rx="2"/>
+    </svg>
+  </div>
+  <!-- Ahsoka: Q4 bottom-right -->
+  <div class="cc" style="align-items:flex-end;justify-content:flex-start;padding-left:5px">
+    <svg viewBox="0 0 120 220" style="height:208px;width:auto">
+      <ellipse cx="42" cy="10" rx="11" ry="32" transform="rotate(-8 42 10)"/>
+      <ellipse cx="78" cy="10" rx="11" ry="32" transform="rotate(8 78 10)"/>
+      <ellipse cx="60" cy="40" rx="23" ry="25"/>
+      <rect x="44" y="62" width="9" height="52" rx="4"/>
+      <rect x="67" y="62" width="9" height="52" rx="4"/>
+      <rect x="34" y="61" width="52" height="67" rx="6"/>
+      <rect x="14" y="63" width="20" height="57" rx="6"/>
+      <rect x="86" y="63" width="20" height="57" rx="6"/>
+      <rect x="10" y="58" width="3.5" height="44" rx="1.5"/>
+      <rect x="8" y="15" width="1.8" height="45" rx=".9"/>
+      <rect x="106.5" y="58" width="3.5" height="44" rx="1.5"/>
+      <rect x="110.2" y="15" width="1.8" height="45" rx=".9"/>
+      <rect x="40" y="128" width="18" height="62" rx="4"/>
+      <rect x="62" y="128" width="18" height="62" rx="4"/>
+    </svg>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="hd">
+  <div class="hd-in">
+    <!-- Sable verde header -->
+    <svg width="22" height="38" viewBox="0 0 22 38" fill="none">
+      <rect x="9.5" y="26" width="3" height="10" rx="1.2" fill="#5a6370"/>
+      <rect x="7" y="27.5" width="8" height="2" rx=".8" fill="#4a5260"/>
+      <rect x="8.5" y="25" width="5" height="2" rx=".6" fill="#3a4250"/>
+      <rect x="10.2" y="3" width="1.6" height="24" rx=".8" fill="#4ade80" opacity=".95"/>
+      <rect x="9.8" y="2" width="2.4" height="1.5" rx=".7" fill="#86efac" opacity=".8"/>
+    </svg>
+    <div class="hd-txt">
+      <div class="hd-title">Archivos del Templo</div>
+      <div class="hd-sub">Consejo Jedi · Misiones Activas</div>
+    </div>
+    <div class="fbar">
+      <div class="flbl">La Fuerza</div>
+      <div class="fps" id="fps">
+        <div class="fp"></div><div class="fp"></div><div class="fp"></div>
+        <div class="fp"></div><div class="fp"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scroll area -->
+<div class="scr">
+  <div class="axrow">
+    <div class="ax">Urgente</div>
+    <div class="ax">No urgente</div>
+  </div>
+
+  <div class="mx">
+
+    <!-- Q1 Urgente + Importante -->
+    <div class="q q1">
+      <div class="qh">
+        <div class="qh-top">
+          <div class="qi">
+            <!-- Sable verde -->
+            <svg viewBox="0 0 22 36" fill="none">
+              <rect x="9.5" y="24" width="3" height="10" rx="1.2" fill="#5a6370"/>
+              <rect x="7" y="25.5" width="8" height="2" rx=".8" fill="#4a5260"/>
+              <rect x="8.5" y="23" width="5" height="2" rx=".6" fill="#3a4250"/>
+              <rect x="10.2" y="2" width="1.6" height="23" rx=".8" fill="#4ade80" opacity=".95"/>
+              <rect x="9.8" y="1.2" width="2.4" height="1.5" rx=".7" fill="#86efac" opacity=".8"/>
+            </svg>
+          </div>
+          <div class="qm">
+            <div class="qax">Urgente · Importante</div>
+            <div class="qq" style="color:var(--red2)">"Do or do not,<br>there is no try"</div>
+          </div>
+        </div>
+      </div>
+      <div class="qt" id="tq1"></div>
+      <button class="qadd" onclick="openM('q1')">+ Nueva misión</button>
+    </div>
+
+    <!-- Q2 No urgente + Importante -->
+    <div class="q q2">
+      <div class="qh">
+        <div class="qh-top">
+          <div class="qi">
+            <!-- Holocron Sith pirámide -->
+            <svg viewBox="0 0 60 56" fill="none">
+              <polygon points="30,2 58,52 2,52" fill="#1a1005" stroke="#c8971e" stroke-width="1.5" stroke-linejoin="round"/>
+              <polygon points="30,2 2,52 30,42" fill="#110b03" opacity=".7"/>
+              <polygon points="18,36 8,50 30,42" fill="#cc2200" opacity=".75"/>
+              <polygon points="18,36 8,50 30,42" fill="none" stroke="#ff4422" stroke-width=".8"/>
+              <polygon points="42,36 52,50 30,42" fill="#cc2200" opacity=".75"/>
+              <polygon points="42,36 52,50 30,42" fill="none" stroke="#ff4422" stroke-width=".8"/>
+              <polygon points="30,18 18,44 42,44" fill="#aa1800" opacity=".8"/>
+              <polygon points="30,18 18,44 42,44" fill="none" stroke="#ff6644" stroke-width=".8"/>
+              <polygon points="30,28 24,42 36,42" fill="#ff2200" opacity=".5"/>
+              <line x1="30" y1="2" x2="2" y2="52" stroke="#c8971e" stroke-width="1.2"/>
+              <line x1="30" y1="2" x2="58" y2="52" stroke="#c8971e" stroke-width="1.2"/>
+              <line x1="2" y1="52" x2="58" y2="52" stroke="#c8971e" stroke-width="1.2"/>
+            </svg>
+          </div>
+          <div class="qm">
+            <div class="qax">No urgente · Importante</div>
+            <div class="qq" style="color:var(--blue2)">"Your focus determines<br>your reality"</div>
+          </div>
+        </div>
+      </div>
+      <div class="qt" id="tq2"></div>
+      <button class="qadd" onclick="openM('q2')">+ Nueva misión</button>
+    </div>
+
+    <!-- Q3 Urgente + No importante -->
+    <div class="q q3">
+      <div class="qh">
+        <div class="qh-top">
+          <div class="qi">
+            <!-- Red lightsaber -->
+            <svg viewBox="0 0 26 36" fill="none">
+              <rect x="11" y="24" width="4" height="10" rx="1.5" fill="#4a4a4a"/>
+              <rect x="12.2" y="4" width="1.6" height="21" rx=".8" fill="#ff4422" opacity=".92"/>
+              <rect x="11.5" y="3" width="3" height="1.4" rx=".6" fill="#ff8866" opacity=".75"/>
+              <rect x="6" y="25.5" width="14" height="2" rx=".8" fill="#555"/>
+              <rect x="8" y="23.5" width="10" height="1.8" rx=".6" fill="#3a3a3a"/>
+            </svg>
+          </div>
+          <div class="qm">
+            <div class="qax">Urgente · No importante</div>
+            <div class="qq" style="color:var(--red2)">"The time has come.<br>Execute Order 66"</div>
+          </div>
+        </div>
+      </div>
+      <div class="qt" id="tq3"></div>
+      <button class="qadd" onclick="openM('q3')">+ Nueva misión</button>
+    </div>
+
+    <!-- Q4 No urgente + No importante -->
+    <div class="q q4">
+      <div class="qh">
+        <div class="qh-top">
+          <div class="qi">
+            <!-- Imperial seal real: 6 rayos + 2 círculos + arcos discontinuos -->
+            <svg viewBox="0 0 60 60" fill="none">
+              <!-- círculo exterior -->
+              <circle cx="30" cy="30" r="28" stroke="#5a4e2e" stroke-width="2.2" fill="none"/>
+              <!-- círculo interior -->
+              <circle cx="30" cy="30" r="19" stroke="#5a4e2e" stroke-width="2" fill="none"/>
+              <!-- nodo central -->
+              <circle cx="30" cy="30" r="6" fill="#5a4e2e"/>
+              <!-- 6 rayos desde centro -->
+              <line x1="30" y1="24" x2="30" y2="11" stroke="#5a4e2e" stroke-width="3.5" stroke-linecap="round"/>
+              <line x1="30" y1="36" x2="30" y2="49" stroke="#5a4e2e" stroke-width="3.5" stroke-linecap="round"/>
+              <line x1="35.2" y1="27" x2="43.6" y2="22.2" stroke="#5a4e2e" stroke-width="3.5" stroke-linecap="round"/>
+              <line x1="24.8" y1="33" x2="16.4" y2="37.8" stroke="#5a4e2e" stroke-width="3.5" stroke-linecap="round"/>
+              <line x1="35.2" y1="33" x2="43.6" y2="37.8" stroke="#5a4e2e" stroke-width="3.5" stroke-linecap="round"/>
+              <line x1="24.8" y1="27" x2="16.4" y2="22.2" stroke="#5a4e2e" stroke-width="3.5" stroke-linecap="round"/>
+              <!-- arcos discontinuos exteriores (6 segmentos) -->
+              <circle cx="30" cy="30" r="28" stroke="#5a4e2e" stroke-width="3.5" fill="none"
+                stroke-dasharray="12 6.7" stroke-dashoffset="3" opacity=".8"/>
+            </svg>
+          </div>
+          <div class="qm">
+            <div class="qax">No urgente · No importante</div>
+            <div class="qq" style="color:var(--mut)">"I find your lack of<br>faith disturbing"</div>
+          </div>
+        </div>
+      </div>
+      <div class="qt" id="tq4"></div>
+      <button class="qadd" onclick="openM('q4')">+ Nueva misión</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<nav class="bnav">
+  <button class="nb act">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+    <span>Matriz</span>
+  </button>
+  <button class="nb" onclick="openM(null)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span>Nueva</span>
+  </button>
+  <button class="nb">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.8 2.8M17 17l2.8 2.8M1 12h4M19 12h4M4.2 19.8l2.8-2.8M17 7l2.8-2.8"/></svg>
+    <span>Fuerza</span>
+  </button>
+</nav>
+
+<!-- Add task modal -->
+<div class="ov" id="ov" onclick="bgClose(event)">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">— Nueva misión —</div>
+
+    <div class="fld">
+      <label class="flb">Nombre de la misión</label>
+      <input type="text" id="tname" placeholder="Ej: Defender la República..." maxlength="60">
+    </div>
+
+    <div class="fld">
+      <label class="flb">Cuadrante</label>
+      <div class="qpick">
+        <button class="qpb" id="pq1" onclick="selQ('q1')">
+          <svg viewBox="0 0 22 36" fill="none" width="22" height="36">
+            <rect x="9.5" y="24" width="3" height="10" rx="1.2" fill="#5a6370"/>
+            <rect x="7" y="25.5" width="8" height="2" rx=".8" fill="#4a5260"/>
+            <rect x="8.5" y="23" width="5" height="2" rx=".6" fill="#3a4250"/>
+            <rect x="10.2" y="2" width="1.6" height="23" rx=".8" fill="#4ade80" opacity=".95"/>
+            <rect x="9.8" y="1.2" width="2.4" height="1.5" rx=".7" fill="#86efac" opacity=".8"/>
+          </svg>
+          <span class="qpb-n">Urgente<br>Importante</span>
+          <span class="qpb-d">Do or do not</span>
+        </button>
+        <button class="qpb" id="pq2" onclick="selQ('q2')">
+          <svg viewBox="0 0 60 56" fill="none" width="28" height="26">
+            <polygon points="30,2 58,52 2,52" fill="#1a1005" stroke="#55bbff" stroke-width="1.5" stroke-linejoin="round"/>
+            <polygon points="30,2 2,52 30,42" fill="#110b03" opacity=".6"/>
+            <polygon points="18,36 8,50 30,42" fill="#1144aa" opacity=".75"/>
+            <polygon points="18,36 8,50 30,42" fill="none" stroke="#55bbff" stroke-width=".8"/>
+            <polygon points="42,36 52,50 30,42" fill="#1144aa" opacity=".75"/>
+            <polygon points="42,36 52,50 30,42" fill="none" stroke="#55bbff" stroke-width=".8"/>
+            <polygon points="30,18 18,44 42,44" fill="#0033aa" opacity=".8"/>
+            <polygon points="30,18 18,44 42,44" fill="none" stroke="#77ccff" stroke-width=".8"/>
+            <polygon points="30,28 24,42 36,42" fill="#55bbff" opacity=".45"/>
+            <line x1="30" y1="2" x2="2" y2="52" stroke="#55bbff" stroke-width="1.2"/>
+            <line x1="30" y1="2" x2="58" y2="52" stroke="#55bbff" stroke-width="1.2"/>
+            <line x1="2" y1="52" x2="58" y2="52" stroke="#55bbff" stroke-width="1.2"/>
+          </svg>
+          <span class="qpb-n">No urgente<br>Importante</span>
+          <span class="qpb-d">Your focus</span>
+        </button>
+        <button class="qpb" id="pq3" onclick="selQ('q3')">
+          <svg viewBox="0 0 22 30" fill="none"><rect x="9.5" y="20" width="3" height="8" rx="1" fill="#555"/><rect x="10.3" y="3" width="1.4" height="18" rx=".7" fill="#ff4422" opacity=".9"/><rect x="9.8" y="2.2" width="2.4" height="1.2" rx=".5" fill="#ff8866" opacity=".7"/><rect x="5" y="21.5" width="12" height="1.8" rx=".7" fill="#444"/></svg>
+          <span class="qpb-n">Urgente<br>No importante</span>
+          <span class="qpb-d">Order 66</span>
+        </button>
+        <button class="qpb" id="pq4" onclick="selQ('q4')">
+          <svg viewBox="0 0 60 60" fill="none" width="28" height="28">
+            <circle cx="30" cy="30" r="28" stroke="#5a4e2e" stroke-width="2.2" fill="none"/>
+            <circle cx="30" cy="30" r="19" stroke="#5a4e2e" stroke-width="2" fill="none"/>
+            <circle cx="30" cy="30" r="6" fill="#5a4e2e"/>
+            <line x1="30" y1="24" x2="30" y2="11" stroke="#5a4e2e" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="30" y1="36" x2="30" y2="49" stroke="#5a4e2e" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="35.2" y1="27" x2="43.6" y2="22.2" stroke="#5a4e2e" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="24.8" y1="33" x2="16.4" y2="37.8" stroke="#5a4e2e" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="35.2" y1="33" x2="43.6" y2="37.8" stroke="#5a4e2e" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="24.8" y1="27" x2="16.4" y2="22.2" stroke="#5a4e2e" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="30" cy="30" r="28" stroke="#5a4e2e" stroke-width="3.5" fill="none" stroke-dasharray="12 6.7" stroke-dashoffset="3" opacity=".8"/>
+          </svg>
+          <span class="qpb-n">No urgente<br>No importante</span>
+          <span class="qpb-d">Lack of faith</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <label class="flb">Rango en la Orden</label>
+      <div class="prow">
+        <button class="pb" id="pp1" onclick="selP(1)">I<span>Maestro Jedi</span></button>
+        <button class="pb" id="pp2" onclick="selP(2)">II<span>Caballero</span></button>
+        <button class="pb" id="pp3" onclick="selP(3)">III<span>Padawan</span></button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <label class="flb">Fecha límite</label>
+      <input type="date" id="tdate">
+    </div>
+
+    <button class="sbtn" onclick="addTask()">— Registrar en los Archivos —</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let tasks=JSON.parse(localStorage.getItem('jto3')||'[]');
+let selQv=null,selPv=1;
+const PC={1:'#c8971e',2:'#9a8a5c',3:'#5a4e2e'};
+
+(function(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<65;i++){
+    const s=document.createElement('div');s.className='s';
+    const z=Math.random()*1.7+.4;
+    Object.assign(s.style,{left:Math.random()*100+'%',top:Math.random()*100+'%',width:z+'px',height:z+'px',animationDuration:(2+Math.random()*5)+'s',animationDelay:(Math.random()*5)+'s'});
+    c.appendChild(s);
+  }
+})();
+
+function save(){localStorage.setItem('jto3',JSON.stringify(tasks))}
+
+function render(){
+  ['q1','q2','q3','q4'].forEach(q=>{
+    const el=document.getElementById('t'+q);
+    const list=tasks.filter(t=>t.q===q).sort((a,b)=>a.p-b.p);
+    el.innerHTML='';
+    if(!list.length){el.innerHTML='<div class="qe">Sin misiones activas</div>';return}
+    list.forEach(t=>el.appendChild(mkTask(t)));
+  });
+  updForce();
+}
+
+function mkTask(t){
+  const d=document.createElement('div');
+  d.className='tc';d.id='tc'+t.id;
+  d.style.setProperty('--pc',PC[t.p]);
+  const today=new Date();today.setHours(0,0,0,0);
+  let ds='',ov=false;
+  if(t.date){
+    const dt=new Date(t.date+'T00:00:00');
+    const diff=Math.round((dt-today)/86400000);
+    if(diff<0){ds='Vencida';ov=true}
+    else if(diff===0)ds='Hoy'
+    else if(diff===1)ds='Mañana'
+    else ds=dt.toLocaleDateString('es-CL',{day:'numeric',month:'short'});
+  }
+  d.innerHTML=`<div class="trk">${t.p}</div><div class="tb"><div class="tn">${esc(t.name)}</div>${ds?`<div class="td2${ov?' ov':''}">${ds}</div>`:''}</div><button class="db" onclick="doneTask('${t.id}',event)"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></button>`;
+  return d;
+}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function updForce(){
+  const n=Math.min(5,tasks.length);
+  document.querySelectorAll('.fp').forEach((p,i)=>p.classList.toggle('on',i<n));
+}
+
+function openM(q){
+  selQv=q;selPv=1;
+  document.getElementById('tname').value='';
+  document.getElementById('tdate').value='';
+  ['q1','q2','q3','q4'].forEach(x=>{document.getElementById('p'+x).className='qpb'+(x===q?' s'+x:'')});
+  [1,2,3].forEach(x=>{document.getElementById('pp'+x).className='pb'+(x===1?' sp1':'')});
+  document.getElementById('ov').classList.add('open');
+  setTimeout(()=>document.getElementById('tname').focus(),360);
+}
+function closeM(){document.getElementById('ov').classList.remove('open')}
+function bgClose(e){if(e.target===document.getElementById('ov'))closeM()}
+
+function selQ(q){
+  selQv=q;
+  ['q1','q2','q3','q4'].forEach(x=>{document.getElementById('p'+x).className='qpb'+(x===q?' s'+x:'')});
+}
+function selP(p){
+  selPv=p;
+  [1,2,3].forEach(x=>{document.getElementById('pp'+x).className='pb'+(x===p?' sp'+x:'')});
+}
+
+function addTask(){
+  const name=document.getElementById('tname').value.trim();
+  if(!name){showToast('La misión necesita nombre, Jedi');return}
+  if(!selQv){showToast('Selecciona un cuadrante');return}
+  tasks.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),name,q:selQv,p:selPv,date:document.getElementById('tdate').value||null,ts:Date.now()});
+  save();render();closeM();
+  showToast('Misión registrada en los Archivos del Templo');
+}
+
+function doneTask(id,e){
+  e.stopPropagation();
+  const el=document.getElementById('tc'+id);
+  if(!el)return;
+  el.classList.add('done');
+  setTimeout(()=>{tasks=tasks.filter(t=>t.id!==id);save();render();showToast('Que la Fuerza te acompañe');},430);
+}
+
+let tt;
+function showToast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+render();
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
+document.getElementById('tname').addEventListener('keydown',e=>{if(e.key==='Enter')addTask()});
+</script>
+</body>
+</html>
